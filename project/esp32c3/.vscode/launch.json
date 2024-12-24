@@ -1,0 +1,45 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    // {
+    //   "type": "gdbtarget",
+    //   "request": "attach",
+    //   "name": "Eclipse CDT GDB Adapter"
+    // },
+    {
+      "name": "esp32 debug",
+      "type": "cppdbg",
+      "request": "launch",
+      "cwd": "${config:idf.buildPath}",
+      "program": "${workspaceFolder}/build/${command:espIdf.getProjectName}.elf",
+      "miDebuggerPath": "C:\\Users\\08607\\.espressif\\tools\\riscv32-esp-elf-gdb\\12.1_20231023\\riscv32-esp-elf-gdb\\bin\\riscv32-esp-elf-gdb.exe",
+      // "MIMode": "gdb",
+      // "preLaunchTask": "OpenOCD: Start openOCD",
+      "stopAtEntry": true,
+      "serverLaunchTimeout": 10000,
+
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing for gdb",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        },
+        {
+          "description": "Set Disassembly Flavor to Intel",
+          "text": "set disassembly-flavor intel",
+          "ignoreFailures": true
+        },
+        {"text": "target remote 127.0.0.1:3333"},
+        {"text": "set remote hardware-watchpoint-limit 2"},
+        {"text": "monitor reset halt"},
+        {"text": "flushregs"},
+        {"text": "thb app_main"}
+      ],
+      "logging": {
+                "trace": true,
+                "traceResponse": true,
+                "engineLogging": true
+      }
+    }
+  ]
+}

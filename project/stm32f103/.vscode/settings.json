@@ -1,0 +1,15 @@
+{
+    "cortex-debug.variableUseNaturalFormat": true,
+    "clangd.arguments": [
+        "--log=verbose",
+        "--clang-tidy",
+        "--pretty",
+        "--all-scopes-completion",
+        "--completion-style=bundled",
+        "--cross-file-rename",
+        "--header-insertion=iwyu",
+        "--header-insertion-decorators",
+        "--background-index",
+        "--compile-commands-dir=${workspaceFolder}/build",
+    ],
+}
