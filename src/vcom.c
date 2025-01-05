@@ -1,6 +1,5 @@
-#include <stdint.h>
 #include "vcom.h"
-#include "vcom_conf.h"
+#include "driver_vcom_conf.h"
 
 #define VCOM_PAYLOAD_FRAME_BITS 8
 
@@ -39,7 +38,7 @@ static inline uint32_t lcm(uint32_t x, uint32_t y)
 }
 
 /**
- * @brief tx pin bit transfer
+ * @brief tx pin bit transfer, called by timer interrupt
  *
  * @param handle: vcom handle
  */
@@ -96,7 +95,7 @@ static inline void vcom_bit_transfer(vcom_handle_t *handle)
 }
 
 /**
- * @brief rx pin bit capture
+ * @brief rx pin bit capture, called by timer interrupt
  *
  * @param handle: vcom handle
  */
@@ -111,10 +110,9 @@ static inline void vcom_bit_capture(vcom_handle_t *handle)
 
     if (handle->rx_bit_shift == -1) {
         rx_bit = handle->rx_gpio_read();
-        /* check if the subsequent start bit is 0, else stop rx */
         if (rx_bit != 0) {
             if (handle->rx_buf_index != 0) {
-                /* for disable transfer check, boost irq handler efficiency */
+                /* being triggered and subsequent bit is 1, stop rx */
                 goto stop_rx;
             } else {
                 /* wait start bit */
@@ -125,6 +123,7 @@ static inline void vcom_bit_capture(vcom_handle_t *handle)
                 return;
             }
         }
+        /* else bit is 0, rx trigger */
         rx_byte = 0;
         handle->rx_bit_pcnt = 0;
         handle->rx_bit_shift++;
@@ -147,7 +146,6 @@ static inline void vcom_bit_capture(vcom_handle_t *handle)
 #endif
     } else {
         rx_bit = handle->rx_gpio_read();
-        /* TODO: idle state check */
         if (rx_bit == 0) {
             handle->rx_error_flag |= VCOM_FRAME_ERROR_STOP;
         }
@@ -176,13 +174,30 @@ static inline void vcom_bit_capture(vcom_handle_t *handle)
 
 stop_rx:
     handle->rx_size = handle->rx_buf_index;
-    /* for disable transfer check, boost irq handler efficiency */
+    /* disable capture check, boost irq handler efficiency */
     handle->next_capture_tick = handle->wrap_count;
     handle->rx_state = VCOM_RX_STATE_IDLE;
     return;
 }
 
-
+/**
+ * @brief initialize vcom instance
+ *
+ * @param handle: vcom handle
+ * @return status code
+ *         - 0: success
+ *         - 1: already initialized
+ *         - 2: irq timer init not set
+ *         - 3: irq timer start not set
+ *         - 4: irq timer stop not set
+ *         - 5: gpio init not set
+ *         - 6: gpio deinit not set
+ *         - 7: tx gpio write function not set
+ *         - 8: rx gpio read function not set
+ *         - 9: irq timer init failed
+ *         - 10: gpio init failed
+ *         - 11: irq timer start failed
+ */
 uint8_t vcom_init(vcom_handle_t *handle)
 {
     if (handle->inited) {
@@ -237,7 +252,7 @@ uint8_t vcom_init(vcom_handle_t *handle)
     }
 
     handle->tx_gpio_write(1);
-    /* TODO: check if the interrupt handler is too time-consuming to block next interrupt */
+    /* TODO: check if the interrupt handler take too long to block next interrupt */
     handle->inited = 1;
 
     return 0;
@@ -249,7 +264,11 @@ uint8_t vcom_init(vcom_handle_t *handle)
  * @param handle: vcom handle
  * @param buf: data head pointer
  * @param len: data length
- * @return 0: success, 1: not initialized, 2: invalid data head pointer or length, 3: task busy
+ * @return status code
+ *         - 0: success
+ *         - 1: not initialized
+ *         - 2: invalid data head pointer or length
+ *         - 3: task busy
  */
 uint8_t vcom_transmit(vcom_handle_t *handle, uint8_t *buf, uint32_t len)
 {
@@ -269,7 +288,7 @@ uint8_t vcom_transmit(vcom_handle_t *handle, uint8_t *buf, uint32_t len)
     handle->tx_size = len;
     handle->tx_buf_index = 0;
     handle->tx_bit_shift = -1;
-    /* next sample after stop bit tx signal must keep high */
+    /* tx signal must keep high until next sample */
     handle->next_transfer_tick =
         handle->next_transfer_tick - handle->now_tick < handle->sample_count
             ? handle->next_transfer_tick % handle->wrap_count
@@ -278,6 +297,17 @@ uint8_t vcom_transmit(vcom_handle_t *handle, uint8_t *buf, uint32_t len)
     return 0;
 }
 
+/**
+ * @brief receive data by vcom instance, not wait for completion
+ *
+ * @param handle: vcom handle
+ * @param buf: data head pointer
+ * @param len: data length
+ * @return status code
+ *         - 0: success
+ *         - 1: not initialized
+ *         - 2: invalid data head pointer or length
+ */
 uint8_t vcom_receive(vcom_handle_t *handle, uint8_t *buf, uint32_t len)
 {
     if (handle->inited == 0) {
@@ -302,6 +332,16 @@ uint8_t vcom_receive(vcom_handle_t *handle, uint8_t *buf, uint32_t len)
     return 0;
 }
 
+/**
+ * @brief deinitialize vcom instance
+ *
+ * @param handle: vcom handle
+ * @return status code
+ *         - 0: success
+ *         - 1: not initialized
+ *         - 2: irq timer stop failed
+ *         - 3: gpio deinit failed
+ */
 uint8_t vcom_deinit(vcom_handle_t *handle)
 {
     if (handle->inited == 0) {
@@ -318,7 +358,13 @@ uint8_t vcom_deinit(vcom_handle_t *handle)
     return 0;
 }
 
-void IRAM_ATTR vcom_timer_handler(vcom_handle_t *handle)
+/**
+ * @brief timer interrupt handler
+ *
+ * @note put this function in timer interrupt handler
+ * @param handle: vcom handle
+ */
+void vcom_timer_handler(vcom_handle_t *handle)
 {
     handle->now_tick += handle->step_count;
 

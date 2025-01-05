@@ -242,10 +242,11 @@ uint8_t vcom_transmit(vcom_handle_t *handle, uint8_t *buf, uint32_t len)
     handle->tx_size = len;
     handle->tx_buf_index = 0;
     handle->tx_bit_shift = -1;
-    /* next sample after stop bit tx signal must keep high */
-    handle->next_transfer_tick = handle->next_transfer_tick - handle->now_tick < handle->sample_count ?
-                                         handle->next_transfer_tick % handle->wrap_count :
-                                         handle->now_tick;
+    /* tx signal must keep high until next sample */
+    handle->next_transfer_tick =
+        handle->next_transfer_tick - handle->now_tick < handle->sample_count
+            ? handle->next_transfer_tick % handle->wrap_count
+            : handle->now_tick;
     handle->tx_state = VCOM_TX_STATE_WAIT_START;
     return 0;
 }

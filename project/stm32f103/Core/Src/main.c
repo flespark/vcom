@@ -87,14 +87,14 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    if (vcom_handle.rx_state == VCOM_RX_STATE_IDLE) {
+      while (vcom_handle.tx_state != VCOM_TX_STATE_IDLE);
       vcom_receive(&vcom_handle, rx_buf, RX_DATA_BUFFER_SIZE);
-    }
-    if (vcom_handle.tx_state == VCOM_TX_STATE_IDLE && vcom_handle.rx_state == VCOM_RX_STATE_IDLE) {
-      vcom_transmit(&vcom_handle, rx_buf, vcom_handle.rx_size);
-    }
+      while (vcom_handle.rx_state != VCOM_RX_STATE_IDLE);
+      if (vcom_handle.rx_size > 0) {
+          vcom_transmit(&vcom_handle, rx_buf, vcom_handle.rx_size);
+      }
     /* USER CODE END WHILE */
-    
+
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */

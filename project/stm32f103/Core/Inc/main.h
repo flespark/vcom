@@ -58,10 +58,13 @@ extern vcom_handle_t vcom_handle;
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define LOG_USART USART1
 #define VCOM_TX_Pin GPIO_PIN_0
 #define VCOM_TX_GPIO_Port GPIOB
 #define VCOM_RX_Pin GPIO_PIN_1
 #define VCOM_RX_GPIO_Port GPIOB
+#define LOG_TX_Pin GPIO_PIN_9
+#define LOG_TX_GPIO_Port GPIOA
 
 /* USER CODE BEGIN Private defines */
 

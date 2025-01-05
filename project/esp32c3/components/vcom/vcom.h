@@ -13,6 +13,10 @@
 #include <stdint.h>
 #include "esp_attr.h"
 
+#ifdef __cplusplus
+extern "C"{
+#endif
+
 /**
  * @brief available frame format
  */
@@ -95,5 +99,9 @@ uint8_t vcom_receive(vcom_handle_t *handle, uint8_t *buf, uint32_t len);
 uint8_t vcom_deinit(vcom_handle_t * handle);
 
 void IRAM_ATTR vcom_timer_handler(vcom_handle_t *handle);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __VCOM_H */

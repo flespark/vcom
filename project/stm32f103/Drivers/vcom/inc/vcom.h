@@ -2,7 +2,6 @@
 #define __VCOM_H
 
 #include <stdint.h>
-#include "vcom_conf.h"
 
 /**
  * @brief available frame format
@@ -76,10 +75,22 @@ typedef struct vcom_handle_s
 } vcom_handle_t;
 
 /**
- * @brief init vcom instance
+ * @brief initialize vcom instance
  *
  * @param handle: vcom handle
- * @return 0: success
+ * @return status code
+ *         - 0: success
+ *         - 1: already initialized
+ *         - 2: irq timer init not set
+ *         - 3: irq timer start not set
+ *         - 4: irq timer stop not set
+ *         - 5: gpio init not set
+ *         - 6: gpio deinit not set
+ *         - 7: tx gpio write function not set
+ *         - 8: rx gpio read function not set
+ *         - 9: irq timer init failed
+ *         - 10: gpio init failed
+ *         - 11: irq timer start failed
  */
 uint8_t vcom_init(vcom_handle_t * handle);
 
@@ -89,7 +100,11 @@ uint8_t vcom_init(vcom_handle_t * handle);
  * @param handle: vcom handle
  * @param buf: data head pointer
  * @param len: data length
- * @return 0: success, 1: not initialized, 2: invalid data head pointer or length, 3: task busy
+ * @return status code
+ *         - 0: success
+ *         - 1: not initialized
+ *         - 2: invalid data head pointer or length
+ *         - 3: task busy
  */
 uint8_t vcom_transmit(vcom_handle_t *handle, uint8_t *buf, uint32_t len);
 
@@ -99,23 +114,31 @@ uint8_t vcom_transmit(vcom_handle_t *handle, uint8_t *buf, uint32_t len);
  * @param handle: vcom handle
  * @param buf: data head pointer
  * @param len: data length
- * @return 0: success, 1: not initialized, 2: invalid data head pointer or length, 3: task busy
+ * @return status code
+ *         - 0: success
+ *         - 1: not initialized
+ *         - 2: invalid data head pointer or length
  */
 uint8_t vcom_receive(vcom_handle_t *handle, uint8_t *buf, uint32_t len);
 
 /**
- * @brief deinit vcom instance
+ * @brief deinitialize vcom instance
  *
  * @param handle: vcom handle
- * @return 0: success, 1: not initialized, 2: interrupt timer stop failed, 3: gpio deinit failed
+ * @return status code
+ *         - 0: success
+ *         - 1: not initialized
+ *         - 2: irq timer stop failed
+ *         - 3: gpio deinit failed
  */
 uint8_t vcom_deinit(vcom_handle_t * handle);
 
 /**
- * @brief vcom periodic interrupt timer handler
+ * @brief timer interrupt handler
  *
+ * @note put this function in timer interrupt handler
  * @param handle: vcom handle
  */
 void vcom_timer_handler(vcom_handle_t *handle);
 
-#endif
+#endif /* __VCOM_H */

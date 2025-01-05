@@ -38,6 +38,8 @@
             "serialNumber": "", //Set ST-Link ID if you use multiple at the same time
             "runToEntryPoint": "main", //Run to main and stop there
             "svdPath": "${workspaceFolder}/device/STM32F103.svd",
+            /* Adapt to your gcc toolchain path */
+            // "armToolchainPath": "C:/Users/08607/scoop/apps/gcc-arm-none-eabi/current/bin",
             "v1": false,
             // "showDevDebugOutput": "both",
             /* Will get automatically detected if STM32CubeIDE is installed to default directory
@@ -60,6 +62,8 @@
             "serialNumber": "", //Set ST-Link ID if you use multiple at the same time
             "runToEntryPoint": "main", //Run to main and stop there
             "svdPath": "${workspaceFolder}/device/STM32F103.svd",
+            /* Adapt to your gcc toolchain path */
+            // "armToolchainPath": "C:/Users/08607/scoop/apps/gcc-arm-none-eabi/current/bin",
             "v1": false,
         },
         // {

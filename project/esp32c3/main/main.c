@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include "vcom.h"
 #include "vcom_interface.h"
 #include "esp_log.h"
@@ -13,7 +12,7 @@ void app_main(void)
 {
     static uint8_t rx_buf[RX_DATA_BUFFER_SIZE];
     
-    // Initialize VCOM handle
+    // initialize VCOM handle
     vcom_handle.irq_timer_init = vcom_interface_timer_init;
     vcom_handle.irq_timer_start = vcom_interface_timer_start;
     vcom_handle.irq_timer_stop = vcom_interface_timer_stop;
@@ -30,15 +29,15 @@ void app_main(void)
     
     vcom_transmit(&vcom_handle, (uint8_t *)"Hello World!\n", 13);
 
-    // Main loop
+    // main loop
     while (1) {
-        while (vcom_handle.tx_state != VCOM_RX_STATE_IDLE) {
+        while (vcom_handle.tx_state != VCOM_TX_STATE_IDLE) {
             // delay for feed watchdog
             vTaskDelay(1);
         }
         vcom_receive(&vcom_handle, rx_buf, RX_DATA_BUFFER_SIZE);
         
-        while (vcom_handle.rx_state != VCOM_TX_STATE_IDLE) {
+        while (vcom_handle.rx_state != VCOM_RX_STATE_IDLE) {
             vTaskDelay(1);
         }
         if (vcom_handle.rx_size > 0) {

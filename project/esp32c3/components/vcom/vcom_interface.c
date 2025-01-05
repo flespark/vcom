@@ -5,7 +5,7 @@
 #include "driver/gptimer.h"
 #include "driver/dedic_gpio.h"
 #include "esp_log.h"
-#include "esp_attr.h"  // For IRAM_ATTR definition
+#include "esp_attr.h"
 
 static gptimer_handle_t vcom_timer = NULL;
 static dedic_gpio_bundle_handle_t gpio_bundle = NULL;
@@ -20,13 +20,13 @@ static IRAM_ATTR bool vcom_timer_callback(gptimer_handle_t timer, const gptimer_
 {
     extern vcom_handle_t vcom_handle;
     vcom_timer_handler(&vcom_handle);
-    return false; // Return false to keep the timer running
+    return false; // return false to keep the timer running
 }
 
 uint8_t vcom_interface_timer_init(void)
 {
     gptimer_config_t timer_config = {
-        .clk_src = GPTIMER_CLK_SRC_XTAL,  // Using XTAL as clock source for better accuracy
+        .clk_src = GPTIMER_CLK_SRC_XTAL,  // using XTAL as clock source for better accuracy
         .direction = GPTIMER_COUNT_UP,
         .resolution_hz = TIMER_SOURCE_CLOCK_FREQ,
     };
@@ -52,7 +52,7 @@ uint8_t vcom_interface_timer_init(void)
 
 uint8_t vcom_interface_timer_start(void)
 {
-    // Calculate alarm value based on desired frequency
+    // calculate alarm value based on desired frequency
     uint64_t alarm_period = TIMER_SOURCE_CLOCK_FREQ / VCOM_TIMER_IRQ_FREQ;
     
     gptimer_alarm_config_t alarm_config = {
@@ -103,7 +103,7 @@ uint8_t vcom_interface_gpio_init(void)
 {
     gpio_config_t io_conf = {};
     
-    // Configure TX GPIO
+    // configure tx GPIO
     io_conf.pin_bit_mask = (1ULL << VCOM_TX_GPIO);
     io_conf.mode = GPIO_MODE_OUTPUT;
     io_conf.pull_up_en = GPIO_PULLUP_DISABLE;
@@ -115,7 +115,7 @@ uint8_t vcom_interface_gpio_init(void)
         return 1;
     }
 
-    // Configure RX GPIO
+    // configure rx GPIO
     io_conf.pin_bit_mask = (1ULL << VCOM_RX_GPIO);
     io_conf.mode = GPIO_MODE_INPUT;
     io_conf.pull_up_en = GPIO_PULLUP_ENABLE;
@@ -126,13 +126,13 @@ uint8_t vcom_interface_gpio_init(void)
         return 1;
     }
 
-    // Create dedicated GPIO bundle for high-speed operation
+    // create dedicated GPIO bundle for high-speed operation
     const int gpio_array[] = {VCOM_TX_GPIO};
     dedic_gpio_bundle_config_t bundle_config = {
         .gpio_array = gpio_array,
         .array_size = sizeof(gpio_array) / sizeof(gpio_array[0]),
         .flags = {
-            .out_en = 1,  // Enable output
+            .out_en = 1,  // enable output
         },
     };
 
@@ -163,7 +163,7 @@ uint8_t vcom_interface_gpio_deinit(void)
 
 uint8_t vcom_interface_tx_gpio_write(uint8_t level)
 {
-    // Use dedicated GPIO for fastest possible output
+    // use dedicated GPIO for fastest possible output
     dedic_gpio_bundle_write(gpio_bundle, 0x01, level ? 0x01 : 0x00);
     return 0;
 }
