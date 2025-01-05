@@ -23,7 +23,7 @@ void vcom_gpio_toggle_test(void)
     vcom_handle.rx_gpio_read = vcom_interface_rx_gpio_read;
     if (vcom_init(&vcom_handle) != 0) {
       printf("vcom_init failed\n");
-      return;
+      goto exit;
     }
     
     for (uint32_t i = 0; i < VCOM_TEST_TOGGLE_TIMES; i++) {

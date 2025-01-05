@@ -17,7 +17,7 @@ static uint8_t rx_buf[1];
  */
 void vcom_timer_irq_feasible_test(void)
 {
-    printf("vcom_timer_irq_feasible_test start\n");
+    printf("vcom_tty_echo_test start\n");
     
     vcom_handle.irq_timer_init = vcom_interface_timer_init;
     vcom_handle.irq_timer_start = vcom_interface_timer_start;
