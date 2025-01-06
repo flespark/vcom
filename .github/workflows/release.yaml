@@ -1,0 +1,57 @@
+name: Create Release on Tag
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Get tag name
+        id: get_tag_name
+        run: echo "TAG_NAME=$(echo ${GITHUB_REF#refs/tags/})" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.get_tag_name.outputs.TAG_NAME }}
+          release_name: Release ${{ steps.get_tag_name.outputs.TAG_NAME }}
+          body: ${{ github.event.head_commit.message }}
+          draft: false
+          prerelease: false
+
+      - name: Package source code (zip)
+        run: |
+          zip -r ${{ steps.get_tag_name.outputs.TAG_NAME }}.zip . -x "*.git*" -x ".github*"
+
+      - name: Package source code (tar.gz)
+        run: |
+          tar -czvf ${{ steps.get_tag_name.outputs.TAG_NAME }}.tar.gz . --exclude "*.git*" --exclude ".github*"
+
+      - name: Upload Release Asset (zip)
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./${{ steps.get_tag_name.outputs.TAG_NAME }}.zip
+          asset_name: Source Code(zip)
+          asset_content_type: application/zip
+
+      - name: Upload Release Asset (tar.gz)
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./${{ steps.get_tag_name.outputs.TAG_NAME }}.tar.gz
+          asset_name: Source Code(tar.gz)
+          asset_content_type: application/gzip
