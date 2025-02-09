@@ -3,11 +3,12 @@
 
 /**
  * @brief initialize the periodical interrupt timer for tx/rx action of vcom
+ * @param hz: timer interrupt frequency to configure
  * @return status code
  *          - 0 success
  *          - 1 vcom init fail
  */
-uint8_t vcom_interface_timer_init(void)
+uint8_t vcom_interface_timer_init(uint32_t hz)
 {
     /* add neccessary code */
     return 0;

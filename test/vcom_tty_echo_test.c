@@ -1,6 +1,8 @@
 #include "vcom.h"
 #include "driver_vcom_interface.h"
 
+#define VCOM_TEST_BAUDRATE 19200
+#define VCOM_TEST_TIMER_IRQ_FREQ 80000
 #define VCOM_TTY_ECHO_TEST_COUNT 20
 
 vcom_handle_t vcom_handle;
@@ -8,6 +10,7 @@ vcom_handle_t vcom_handle;
 static uint8_t rx_buf[1];
 
 /**
+
  * @brief used for test if vcom communication speed as expected. before run this
  *        test, connect tx and rx pin of vcom to serial port of computer. open a
  *        echo serial terminal software with corresponding baudrate and parity,
@@ -15,10 +18,11 @@ static uint8_t rx_buf[1];
  *        same thing in terminal.
  * @return void
  */
-void vcom_timer_irq_feasible_test(void)
+void vcom_tty_echo_test(void)
 {
     printf("vcom_tty_echo_test start\n");
     
+
     vcom_handle.irq_timer_init = vcom_interface_timer_init;
     vcom_handle.irq_timer_start = vcom_interface_timer_start;
     vcom_handle.irq_timer_stop = vcom_interface_timer_stop;
@@ -31,7 +35,10 @@ void vcom_timer_irq_feasible_test(void)
       goto exit;
     }
 
-    vcom_transmit(&vcom_handle, (uint8_t *)"Hello, World!\n", 14);
+    vcom_transmit(&vcom_handle, (uint8_t *)
+        "######################\r\n"
+        "#    Hello, World!   #\r\n"
+        "######################\r\n", 73);    
     
     for (uint32_t i = 0; i < VCOM_TTY_ECHO_TEST_COUNT; i++) {
         while (vcom_handle.tx_state != VCOM_TX_STATE_IDLE);

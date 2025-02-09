@@ -18,7 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "gpio.h"
+#include "usart.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -38,7 +38,15 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
+
+
 #define RX_DATA_BUFFER_SIZE 80
+#define VCOM_TTY_ECHO_TEST_COUNT 20
+
+#define DEBUG_UART UART0
+#define DEBUG_UART_Pin GPIO_PIN_5
+#define DEBUG_UART_GPIO_Port GPIOC
+#define DEBUG_UART_BAUDRATE 115200U
 
 /* USER CODE END PM */
 
@@ -46,6 +54,8 @@
 
 /* USER CODE BEGIN PV */
 vcom_handle_t vcom_handle = {0};
+
+static uint8_t rx_buf[RX_DATA_BUFFER_SIZE];
 
 /* USER CODE END PV */
 
@@ -64,40 +74,49 @@ void SystemClock_Config(void);
   */
 int main(void)
 {
-  static uint8_t rx_buf[RX_DATA_BUFFER_SIZE];
 
-  HAL_Init();
+    HAL_Init();
 
-  SystemClock_Config();
+    SystemClock_Config();
 
-  vcom_handle.irq_timer_init = vcom_interface_timer_init;
-  vcom_handle.irq_timer_start = vcom_interface_timer_start;
-  vcom_handle.irq_timer_stop = vcom_interface_timer_stop;
-  vcom_handle.gpio_init = vcom_interface_gpio_init;
-  vcom_handle.gpio_deinit = vcom_interface_gpio_deinit;
-  vcom_handle.tx_gpio_write = vcom_interface_tx_gpio_write;
-  vcom_handle.rx_gpio_read = vcom_interface_rx_gpio_read;
-  if (vcom_init(&vcom_handle) != 0) {
-    Error_Handler();
-  }
-  vcom_transmit(&vcom_handle, (uint8_t *)"Hello, World!\n", 14);
-  /* USER CODE END 2 */
+    MX_USART1_UART_Init();
 
-  /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
-  while (1)
-  {
-      while (vcom_handle.tx_state != VCOM_TX_STATE_IDLE);
-      vcom_receive(&vcom_handle, rx_buf, RX_DATA_BUFFER_SIZE);
-      while (vcom_handle.rx_state != VCOM_RX_STATE_IDLE);
-      if (vcom_handle.rx_size > 0) {
-          vcom_transmit(&vcom_handle, rx_buf, vcom_handle.rx_size);
-      }
-    /* USER CODE END WHILE */
+    printf("start\n");
+    vcom_handle.irq_timer_init  = vcom_interface_timer_init;
+    vcom_handle.irq_timer_start = vcom_interface_timer_start;
+    vcom_handle.irq_timer_stop  = vcom_interface_timer_stop;
+    vcom_handle.gpio_init       = vcom_interface_gpio_init;
+    vcom_handle.gpio_deinit     = vcom_interface_gpio_deinit;
+    vcom_handle.tx_gpio_write   = vcom_interface_tx_gpio_write;
+    vcom_handle.rx_gpio_read    = vcom_interface_rx_gpio_read;
+    if (vcom_init(&vcom_handle, 19200, 80000) != 0) {
+        printf("vcom_init failed\n");
+        goto exit;
+    }
 
-    /* USER CODE BEGIN 3 */
-  }
-  /* USER CODE END 3 */
+    vcom_transmit(&vcom_handle, (uint8_t *)
+        "######################\r\n"
+        "#    Hello, World!   #\r\n"
+        "######################\r\n", 73);
+
+    for (uint32_t i = 0; i < VCOM_TTY_ECHO_TEST_COUNT; i++) {
+        while (vcom_handle.tx_state != VCOM_TX_STATE_IDLE)
+            ;
+        vcom_receive(&vcom_handle, rx_buf, 1);
+        while (vcom_handle.rx_state != VCOM_RX_STATE_IDLE)
+            ;
+        if (vcom_handle.rx_error_flag != 0) {
+            printf("rx error flag is not 0, vcom_tty_echo_test failed\n");
+            goto exit;
+        }
+        if (vcom_handle.rx_size > 0) {
+            vcom_transmit(&vcom_handle, rx_buf, 1);
+        }
+    }
+
+    printf("vcom_tty_echo_test passed\n");
+exit:
+    vcom_deinit(&vcom_handle);
 }
 
 /* USER CODE END 0 */
@@ -147,7 +166,73 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+/* support printf function, usemicrolib is unnecessary */
+#if (__ARMCC_VERSION > 6000000)
+  __asm (".global __use_no_semihosting\n\t");
+  void _sys_exit(int x)
+  {
+    x = x;
+  }
+  /* __use_no_semihosting was requested, but _ttywrch was */
+  void _ttywrch(int ch)
+  {
+    ch = ch;
+  }
+  FILE __stdout;
+#else
+ #ifdef __CC_ARM
+  #pragma import(__use_no_semihosting)
+  struct __FILE
+  {
+    int handle;
+  };
+  FILE __stdout;
+  void _sys_exit(int x)
+  {
+    x = x;
+  }
+  /* __use_no_semihosting was requested, but _ttywrch was */
+  void _ttywrch(int ch)
+  {
+    ch = ch;
+  }
+ #endif
+#endif
 
+#if defined (__GNUC__) && !defined (__clang__)
+  #define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
+#else
+  #define PUTCHAR_PROTOTYPE int fputc(int ch, FILE *f)
+#endif
+
+/**
+  * @brief  retargets the c library printf function to the usart.
+  * @param  none
+  * @retval none
+  */
+PUTCHAR_PROTOTYPE
+{
+  HAL_UART_Transmit(&huart1, (uint8_t *)&ch, 1, 0xFFFF);
+  return ch;
+}
+
+#if (defined (__GNUC__) && !defined (__clang__)) || (defined (__ICCARM__))
+#if defined (__GNUC__) && !defined (__clang__)
+int _write(int fd, char *pbuffer, int size)
+#elif defined ( __ICCARM__ )
+#pragma module_name = "?__write"
+int __write(int fd, char *pbuffer, int size)
+#endif
+{
+  (void)fd;
+  for(int i = 0; i < size; i ++)
+  {
+    HAL_UART_Transmit(&huart1, (uint8_t *)(pbuffer++), 1, 0xFFFF);
+  }
+
+  return size;
+}
+#endif
 /* USER CODE END 4 */
 
 /**

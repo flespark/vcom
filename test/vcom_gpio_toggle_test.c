@@ -1,6 +1,8 @@
 #include "vcom.h"
 #include "driver_vcom_interface.h"
 
+#define VCOM_TEST_BAUDRATE 19200
+#define VCOM_TEST_TIMER_IRQ_FREQ 80000
 #define VCOM_TEST_TOGGLE_TIMES 1000000
 
 vcom_handle_t vcom_handle;
@@ -21,7 +23,7 @@ void vcom_gpio_toggle_test(void)
     vcom_handle.gpio_deinit = vcom_interface_gpio_deinit;
     vcom_handle.tx_gpio_write = vcom_interface_tx_gpio_write;
     vcom_handle.rx_gpio_read = vcom_interface_rx_gpio_read;
-    if (vcom_init(&vcom_handle) != 0) {
+    if (vcom_init(&vcom_handle, VCOM_TEST_BAUDRATE, VCOM_TEST_TIMER_IRQ_FREQ) != 0) {
       printf("vcom_init failed\n");
       goto exit;
     }

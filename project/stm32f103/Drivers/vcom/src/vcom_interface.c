@@ -2,9 +2,38 @@
 #include "tim.h"
 #include "main.h"
 
-uint8_t vcom_interface_timer_init(void)
+uint8_t vcom_interface_timer_init(uint32_t hz)
 {
-    MX_TIM4_Init();
+    TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+    TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+    uint32_t apb1_freq = HAL_RCC_GetPCLK1Freq();
+    if (apb1_freq < hz || apb1_freq % hz != 0) {
+        return 1;
+    }
+    uint32_t max_count = apb1_freq / hz;
+    if (max_count > 0xFFFF) {
+        return 2;
+    }
+
+    htim4.Instance = TIM4;
+    htim4.Init.Prescaler = 1;
+    htim4.Init.CounterMode = TIM_COUNTERMODE_UP;
+    htim4.Init.Period = max_count;
+    htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+    htim4.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+    if (HAL_TIM_Base_Init(&htim4) != HAL_OK) {
+        return 3;
+    }
+    sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+    if (HAL_TIM_ConfigClockSource(&htim4, &sClockSourceConfig) != HAL_OK) {
+        return 4;
+    }
+    sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+    sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+    if (HAL_TIMEx_MasterConfigSynchronization(&htim4, &sMasterConfig) != HAL_OK) {
+        return 5;
+    }
     return 0;
 }
 

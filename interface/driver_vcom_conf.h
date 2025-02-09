@@ -4,19 +4,6 @@
 #include "driver_vcom_interface.h"
 
 /**
- * @brief vcom baudrate
- * @note should set relative low value test if timer interrupt block first
- */
-#define VCOM_BAUDRATE 19200
-
-/**
- * @brief hardware timer interrupt frequency(interrupt timers per second) for
- *        vcom transfer and capture
- * @note suggest be 3 times of vcom baudrate at least
- */
-#define VCOM_TIMER_IRQ_FREQ 100000
-
-/**
  * @brief frame format setting
  *
  */

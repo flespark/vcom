@@ -6,7 +6,7 @@ A simple software UART driver, data is asynchronous send/receive in hardware tim
 
 ### TODO
 
-- [ ] Check the logical validity of configs.
+- [X] Check the logical validity of configs.
 - [ ] Add async tx/rx finish callback interface.
 
 ### Instruction
@@ -31,8 +31,8 @@ Add the /src directory, interface driver for your platform, and your own drivers
 
 You can refer to the examples in the /example directory to complete your own driver. Take care of these 2 config:
 
-- UART baudrate (defined by `VCOM_BAUDRATE`) : The VCOM will transmit/capture UART signal at timing defined by baudrate as possible, but limit by timer interrupt frequency. Interrupt frequency should be 5 times of baudrate at least, even multiple scale is better.
-- timer interrupt frequency (defined by `VCOM_TIMER_IRQ_FREQ`): This macro should refered in timer interface driver by yourself. Although higher interrupt frequency usually brings higher signal precision, but too higher will cause tasks could not get enough CPU time , even lead queue the interrupt itself. Suggest frequency belows 1/20 CPU clock.
+- VCOM baudrate (`baudrate`) : The VCOM will transmit/capture UART signal at timing defined by baudrate as possible, but limit by timer interrupt frequency. Interrupt frequency should be 4 times of baudrate at least.
+- timer interrupt frequency (`timer_irq_freq`): This parameter pass to `vcom_interface_timer_init` directly, so the value of `timer_irq_freq` is limited by timing resolution of MCU timer peripheral. Although higher interrupt frequency usually brings higher signal precision, but may cause tasks unable to get enough CPU time , even queuing the interrupt itself. Suggested frequency belows 1/40 CPU clock according to common MCU instruction efficiency.
 
 Because the difference of MCU in GPIO toggle capability, CPU speed and instruction efficiency, recommend to run test cases in /test directory to confirm feasible of config before apply VCOM.
 

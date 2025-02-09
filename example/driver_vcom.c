@@ -4,9 +4,11 @@ vcom_handle_t vcom_handle = {0};
 
 /**
  * @brief initialize the vcom driver
+ * @param baudrate: UART baudrate
+ * @param timer_irq_freq: signal transmit/capture periodic timer interrupt frequency
  * @return 0 if successful, otherwise an error code
  */
-uint8_t driver_vcom_init(void)
+uint8_t driver_vcom_init(uint32_t baudrate, uint32_t timer_irq_freq)
 {
   vcom_handle.irq_timer_init = vcom_interface_timer_init;
   vcom_handle.irq_timer_start = vcom_interface_timer_start;
@@ -15,7 +17,7 @@ uint8_t driver_vcom_init(void)
   vcom_handle.gpio_deinit = vcom_interface_gpio_deinit;
   vcom_handle.tx_gpio_write = vcom_interface_tx_gpio_write;
   vcom_handle.rx_gpio_read = vcom_interface_rx_gpio_read;
-  return vcom_init(&vcom_handle);
+  return vcom_init(&vcom_handle, baudrate, timer_irq_freq);
 }
 
 /**

@@ -50,7 +50,7 @@ extern "C"{
  */
 typedef struct vcom_handle_s
 {
-    uint8_t (*irq_timer_init)(void);         /* periodic interrupt timer init interface */
+    uint8_t (*irq_timer_init)(uint32_t hz);  /* periodic interrupt timer init interface */
     uint8_t (*irq_timer_start)(void);        /* periodic interrupt timer start interface */
     uint8_t (*irq_timer_stop)(void);         /* periodic interrupt timer stop interface */
     uint8_t (*gpio_init)(void);              /* tx and rx gpio init interface */
@@ -83,6 +83,8 @@ typedef struct vcom_handle_s
  * @brief initialize vcom instance
  *
  * @param handle: vcom handle
+ * @param baudrate: UART baudrate
+ * @param timer_irq_freq: signal transmit/capture periodic timer interrupt frequency
  * @return status code
  *         - 0: success
  *         - 1: already initialized
@@ -97,7 +99,7 @@ typedef struct vcom_handle_s
  *         - 10: gpio init failed
  *         - 11: irq timer start failed
  */
-uint8_t vcom_init(vcom_handle_t * handle);
+uint8_t vcom_init(vcom_handle_t * handle, uint32_t baudrate, uint32_t timer_irq_freq);
 
 /**
  * @brief transmit data by vcom instance, not wait for completion

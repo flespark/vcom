@@ -1,6 +1,7 @@
 #ifndef __DRIVER_VCOM_H
 #define __DRIVER_VCOM_H
 
+#include <stdint.h>
 #include "vcom.h"
 #include "driver_vcom_interface.h"
 
@@ -10,9 +11,11 @@ extern "C"{
     
 /**
  * @brief initialize the vcom driver
+ * @param baudrate: UART baudrate
+ * @param timer_irq_freq: signal transmit/capture periodic timer interrupt frequency
  * @return 0 if successful, otherwise an error code
  */
-uint8_t driver_vcom_init(void);
+uint8_t driver_vcom_init(uint32_t baudrate, uint32_t timer_irq_freq);
 
 /**
  * @brief send data over vcom using polling

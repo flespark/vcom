@@ -1,7 +1,6 @@
-#include <stdint.h>
-#include "vcom_conf.h"
+#include <stddef.h>
 #include "vcom.h"
-#include "main.h"
+#include "vcom_conf.h"
 
 #define VCOM_PAYLOAD_FRAME_BITS 8
 
@@ -186,6 +185,8 @@ stop_rx:
  * @brief initialize vcom instance
  *
  * @param handle: vcom handle
+ * @param baudrate: UART baudrate
+ * @param timer_irq_freq: signal transmit/capture periodic timer interrupt frequency
  * @return status code
  *         - 0: success
  *         - 1: already initialized
@@ -200,45 +201,48 @@ stop_rx:
  *         - 10: gpio init failed
  *         - 11: irq timer start failed
  */
-uint8_t vcom_init(vcom_handle_t *handle)
+uint8_t vcom_init(vcom_handle_t *handle, uint32_t baudrate, uint32_t timer_irq_freq)
 {
-    if (handle->inited) {
+    if (timer_irq_freq == 0 || baudrate == 0 || timer_irq_freq / baudrate < 2) {
         return 1;
     }
-    if (handle->irq_timer_init == NULL) {
+
+    if (handle->inited) {
         return 2;
     }
-    if (handle->irq_timer_start == NULL) {
+    if (handle->irq_timer_init == NULL) {
         return 3;
     }
-    if (handle->irq_timer_stop == NULL) {
+    if (handle->irq_timer_start == NULL) {
         return 4;
     }
-    if (handle->gpio_init == NULL) {
+    if (handle->irq_timer_stop == NULL) {
         return 5;
     }
-    if (handle->gpio_deinit == NULL) {
+    if (handle->gpio_init == NULL) {
         return 6;
     }
-    if (handle->tx_gpio_write == NULL) {
+    if (handle->gpio_deinit == NULL) {
         return 7;
     }
-    if (handle->rx_gpio_read == NULL) {
+    if (handle->tx_gpio_write == NULL) {
         return 8;
     }
-
-    if (handle->irq_timer_init() != 0) {
+    if (handle->rx_gpio_read == NULL) {
         return 9;
     }
-    if (handle->gpio_init() != 0) {
+
+    if (handle->irq_timer_init(timer_irq_freq) != 0) {
         return 10;
     }
+    if (handle->gpio_init() != 0) {
+        return 11;
+    }
 
-    /* TODO: timer irq freq and baudrate validate */
-    handle->step_count = VCOM_BAUDRATE;
-    handle->sample_count = VCOM_TIMER_IRQ_FREQ;
+    handle->step_count = baudrate;
+    handle->sample_count = timer_irq_freq;
     /* multiple frame bits for tx delay */
-    handle->wrap_count = lcm(VCOM_TIMER_IRQ_FREQ, VCOM_BAUDRATE) * VCOM_MAC_FRAME_BITS;
+    handle->wrap_count = lcm(timer_irq_freq, baudrate) * VCOM_MAC_FRAME_BITS;
     handle->tx_size = 0;
     handle->rx_bit_shift = -1;
     handle->tx_state = VCOM_TX_STATE_IDLE;
@@ -250,11 +254,10 @@ uint8_t vcom_init(vcom_handle_t *handle)
     handle->next_capture_tick = handle->wrap_count;
 
     if (handle->irq_timer_start() != 0) {
-        return 11;
+        return 12;
     }
 
     handle->tx_gpio_write(1);
-    /* TODO: check if the interrupt handler take too long to block next interrupt */
     handle->inited = 1;
 
     return 0;

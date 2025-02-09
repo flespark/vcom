@@ -7,7 +7,7 @@ extern "C"{
 
 #include "stdint.h"
 
-uint8_t vcom_interface_timer_init(void);
+uint8_t vcom_interface_timer_init(uint32_t hz);
 uint8_t vcom_interface_timer_start(void);
 uint8_t vcom_interface_timer_stop(void);
 uint8_t vcom_interface_gpio_init(void);
